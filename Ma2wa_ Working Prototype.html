@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ma2wa: Working Prototype</title>
+<style>
+  :root{--bur:#5A0A12;--bur2:#7a1a24;--blush:#FCE4E6;--ink:#3D2A2D;--mute:#8a7477;--line:#eadadc;--ok:#2f6b3d;--bg:#f6f1f1}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;gap:56px;padding:24px}
+  /* presenter guide */
+  .guide{width:300px;flex:none}
+  .guide .brand{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--bur);font-weight:bold}
+  .guide h1{font-size:26px;line-height:1.15;margin:10px 0 6px;color:var(--ink)}
+  .guide p.sub{font-size:13px;color:var(--mute);margin-bottom:22px;line-height:1.45}
+  .guide ol{list-style:none;border-left:2px solid var(--line)}
+  .guide li{padding:9px 0 9px 16px;font-size:13.5px;cursor:pointer;position:relative;color:var(--mute);line-height:1.3}
+  .guide li b{display:block;color:var(--ink);font-size:14px}
+  .guide li.on{color:var(--ink)}
+  .guide li.on::before{content:"";position:absolute;left:-2px;top:8px;bottom:8px;width:2px;background:var(--bur)}
+  .guide .foot{margin-top:22px;font-size:11.5px;color:var(--mute);line-height:1.5}
+  .guide .foot kbd{border:1px solid var(--line);border-radius:3px;padding:0 4px;font-family:inherit;background:#fff}
+  @media (max-width:820px){.guide{display:none}body{padding:0}}
+  /* phone */
+  .phone{width:390px;height:800px;background:#fff;border-radius:44px;border:10px solid #1d1416;position:relative;overflow:hidden;flex:none;box-shadow:0 0 0 1px #000}
+  @media (max-width:820px){.phone{width:100vw;height:100vh;border-radius:0;border:0}}
+  .status{height:44px;display:flex;justify-content:space-between;align-items:center;padding:0 26px;font-size:13px;font-weight:bold}
+  .screen{position:absolute;top:44px;left:0;right:0;bottom:0;display:none;flex-direction:column;background:#fff}
+  .screen.on{display:flex;animation:in .22s ease}
+  @keyframes in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+  .top{display:flex;align-items:center;gap:10px;padding:8px 20px 12px}
+  .back{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--bur);background:#fff}
+  .top h2{font-size:17px}
+  .body{flex:1;overflow-y:auto;padding:0 20px 20px}
+  .body::-webkit-scrollbar{display:none}
+  .label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);font-weight:bold;margin:18px 0 8px}
+  .btn{display:block;width:100%;border:0;border-radius:12px;padding:15px;font:bold 15px Arial;cursor:pointer;background:var(--bur);color:#fff;text-align:center}
+  .btn.ghost{background:#fff;color:var(--bur);border:1.5px solid var(--bur)}
+  .btn+.btn{margin-top:10px}
+  .cta{padding:12px 20px 16px;border-top:1px solid var(--line);background:#fff}
+  .card{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;background:#fff}
+  .row{display:flex;align-items:center;gap:12px}
+  .avatar{width:42px;height:42px;border-radius:50%;background:var(--blush);color:var(--bur);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;flex:none}
+  .muted{color:var(--mute);font-size:12.5px}
+  .pill{display:inline-block;font-size:11px;font-weight:bold;padding:3px 8px;border-radius:20px;background:var(--blush);color:var(--bur);margin:6px 4px 0 0}
+  .pill.ok{background:#e6f1e8;color:var(--ok)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:1.5px solid var(--line);border-radius:22px;padding:9px 14px;font-size:13.5px;cursor:pointer;background:#fff}
+  .chip.sel{border-color:var(--bur);background:var(--blush);color:var(--bur);font-weight:bold}
+  /* home */
+  .hello{padding:6px 20px 0}
+  .hello .muted{font-size:13px}
+  .hello h1{font-size:24px;margin-top:2px}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:18px 20px 6px}
+  .tile{border-radius:16px;padding:16px 14px;min-height:118px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;border:1px solid var(--line);background:#fff}
+  .tile.main{background:var(--bur);color:#fff;border-color:var(--bur);grid-column:1/3;min-height:104px}
+  .tile .t{font-weight:bold;font-size:15.5px}
+  .tile .d{font-size:12px;opacity:.75;line-height:1.35}
+  .tile .ic{width:28px;height:28px}
+  .nearby{margin:12px 20px 0;padding:12px 14px;background:var(--blush);border-radius:12px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+  .tabbar{height:64px;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;font-size:10.5px;color:var(--mute)}
+  .tabbar div{text-align:center;cursor:pointer}.tabbar .act{color:var(--bur);font-weight:bold}
+  .tabbar svg{display:block;margin:0 auto 3px}
+  /* photo */
+  .photo{height:190px;border-radius:14px;background:var(--blush);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:pointer}
+  .photo img{width:100%;height:100%;object-fit:cover}
+  .photo .tag{position:absolute;left:10px;bottom:10px;background:rgba(255,255,255,.95);border-radius:20px;padding:5px 10px;font-size:11.5px;font-weight:bold;color:var(--ink)}
+  .map{height:120px;border-radius:14px;background:#f3eced;position:relative;overflow:hidden;border:1px solid var(--line)}
+  textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px;font:14px Arial;resize:none;height:70px;color:var(--ink)}
+  /* routing */
+  .pulse{width:96px;height:96px;margin:40px auto 18px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;position:relative}
+  .pulse::after{content:"";position:absolute;inset:-10px;border-radius:50%;border:2px solid var(--bur);opacity:.4;animation:pl 1.2s infinite}
+  @keyframes pl{from{transform:scale(.85);opacity:.6}to{transform:scale(1.25);opacity:0}}
+  .center{text-align:center}
+  .timeline{position:relative;margin:4px 0 6px;padding-left:22px}
+  .timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--line)}
+  .tl{position:relative;padding:6px 0 10px;font-size:13.5px}
+  .tl::before{content:"";position:absolute;left:-21px;top:9px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--line)}
+  .tl.done::before{background:var(--bur);border-color:var(--bur)}
+  .tl.now::before{border-color:var(--bur)}
+  .tl .muted{font-size:12px}
+  /* steps */
+  .prog{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0 4px}.prog i{display:block;height:100%;background:var(--bur);width:25%;transition:width .3s}
+  .step{border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+  .step .h{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer}
+  .step .n{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--bur);color:var(--bur);font-size:12px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex:none}
+  .step.done .n{background:var(--bur);color:#fff}
+  .step .h b{font-size:14px}
+  .step .x{display:none;padding:0 14px 14px 52px;font-size:13px;line-height:1.5;color:var(--ink)}
+  .step.open .x{display:block}
+  .step .x button{margin-top:10px;border:0;background:var(--blush);color:var(--bur);font:bold 12.5px Arial;padding:8px 12px;border-radius:8px;cursor:pointer}
+  /* bundle */
+  .items div{display:flex;justify-content:space-between;font-size:13.5px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .price{font-size:26px;font-weight:bold;color:var(--bur)}
+  .strike{text-decoration:line-through;color:var(--mute);font-size:14px;margin-left:6px}
+  /* providers */
+  .prov{cursor:pointer}
+  .prov .rt{font-weight:bold;font-size:15px;color:var(--bur);text-align:right}
+  .seg{display:flex;background:#f3eced;border-radius:10px;padding:3px}
+  .seg div{flex:1;text-align:center;padding:9px;font-size:13px;border-radius:8px;cursor:pointer}
+  .seg .on{background:#fff;font-weight:bold;color:var(--bur);box-shadow:0 0 0 1px var(--line)}
+  .dates{display:flex;gap:8px}.dates div{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--mute)}.dates b{display:block;color:var(--ink);font-size:15px;margin-top:2px}
+  .sum div{display:flex;justify-content:space-between;font-size:14px;padding:7px 0}
+  .sum .tot{border-top:1px solid var(--line);margin-top:4px;padding-top:11px;font-weight:bold;font-size:16px}
+  .feed .card{padding:0;overflow:hidden}
+  .feed .pic{height:150px;background:var(--blush);display:flex;align-items:center;justify-content:center}
+  .feed .meta{padding:12px 14px;font-size:13px}
+  .check{width:74px;height:74px;border-radius:50%;background:var(--bur);margin:34px auto 16px;display:flex;align-items:center;justify-content:center}
+  .toast{position:absolute;left:16px;right:16px;bottom:84px;background:var(--ink);color:#fff;font-size:13px;padding:12px 14px;border-radius:12px;display:none;z-index:5}
+  .toast.on{display:block;animation:in .2s}
+</style>
+</head>
+<body>
+
+<aside class="guide">
+  <div class="brand">Ma2wa · مأوى</div>
+  <h1>One journey,<br>one app.</h1>
+  <p class="sub">Working prototype. Follow Sara: she finds a kitten outside her building in Sharjah, gets it help, adopts it, and later books verified care when she travels.</p>
+  <ol id="guide">
+    <li data-go="home"><b>1 · Home</b>Four ways to help, one starting point</li>
+    <li data-go="report"><b>2 · Report a stray</b>Photo + geotag in under 30 seconds</li>
+    <li data-go="routing"><b>3 · Smart routing</b>Nearest vet, rescuer and shelter notified</li>
+    <li data-go="journey"><b>4 · Guided adoption</b>Vet, vaccines, papers: step by step</li>
+    <li data-go="bundle"><b>5 · Starter bundle</b>Partner store kit (revenue stream 2)</li>
+    <li data-go="care"><b>6 · Book verified care</b>Months later, Sara travels (revenue stream 1)</li>
+    <li data-go="provider"><b>7 · Provider & checkout</b>Verified, vet on call, no booking fee</li>
+    <li data-go="updates"><b>8 · Peace of mind</b>Daily photo updates while away</li>
+  </ol>
+  <div class="foot">Click any step, or use <kbd>←</kbd> <kbd>→</kbd> to move through the demo. All providers, names and prices shown are illustrative.</div>
+</aside>
+
+<div class="phone">
+  <div class="status"><span>9:41</span><span>●●● 5G ▮</span></div>
+
+  <!-- HOME -->
+  <section class="screen" id="home">
+    <div class="hello"><div class="muted">Good evening, Sara · Al Nahda, Sharjah</div><h1>How can you help today?</h1></div>
+    <div class="tiles">
+      <div class="tile main" data-go="report">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <div><div class="t">I found a stray</div><div class="d">Snap, pin and we route it to the nearest help</div></div>
+      </div>
+      <div class="tile" data-go="journey">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#5A0A12" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/></svg>
+        <div><div class="t">Adopt</div><div class="d">Guided steps, vet & papers</div></div>
+      </div>
+      <div class="tile" data-go="care">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#5A0A12" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5h8v2"/></svg>
+        <div><div class="t">Book care</div><div class="d">Verified sitters & cat hotels</div></div>
+      </div>
+      <div class="tile" data-go="rehome">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#5A0A12" stroke-width="1.8"><path d="M7 12h10M13 8l4 4-4 4"/><path d="M4 4v16"/></svg>
+        <div><div class="t">Rehome</div><div class="d">Safe handover to screened adopters</div></div>
+      </div>
+      <div class="tile" data-go="sponsor">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#5A0A12" stroke-width="1.8"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+        <div><div class="t">Sponsor / foster</div><div class="d">Help without adopting</div></div>
+      </div>
+    </div>
+    <div class="nearby"><span><b>3 open reports</b> within 2 km of you</span><span style="color:var(--bur);font-weight:bold;cursor:pointer" data-go="routing">View ›</span></div>
+    <div style="flex:1"></div>
+    <nav class="tabbar">
+      <div class="act"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11l8-7 8 7v9H4z"/></svg>Home</div>
+      <div data-go="routing"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>Reports</div>
+      <div data-go="journey"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Journey</div>
+      <div data-go="care"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="13" rx="2"/></svg>Care</div>
+    </nav>
+  </section>
+
+  <!-- REPORT -->
+  <section class="screen" id="report">
+    <div class="top"><div class="back" data-go="home">‹</div><h2>Report a stray</h2></div>
+    <div class="body">
+      <label class="photo" id="photoBox">
+        <svg id="catArt" width="150" height="120" viewBox="0 0 150 120"><g fill="none" stroke="#5A0A12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M45 95c-6-22 4-46 30-46s36 24 30 46"/><path d="M52 55l-6-22 18 12M98 55l6-22-18 12"/><circle cx="64" cy="70" r="2.5" fill="#5A0A12"/><circle cx="86" cy="70" r="2.5" fill="#5A0A12"/><path d="M72 79h6M75 79v4M40 78l18 2M40 86l18-1M110 78l-18 2M110 86l-18-1"/><path d="M105 95c14 0 20-8 18-18"/></g></svg>
+        <img id="photoImg" alt="" style="display:none">
+        <span class="tag">● Geotagged · Al Nahda, Sharjah</span>
+        <input type="file" accept="image/*" id="photoIn" style="display:none">
+      </label>
+      <div class="muted" style="margin-top:6px">Tap to add your own photo</div>
+      <div class="label">What do you see?</div>
+      <div class="chips" data-single="cond">
+        <div class="chip sel">Kitten</div><div class="chip">Healthy adult</div><div class="chip">Injured</div><div class="chip">Mother & kittens</div>
+      </div>
+      <div class="label">How urgent?</div>
+      <div class="chips" data-single="urg">
+        <div class="chip">Emergency</div><div class="chip sel">Needs help today</div><div class="chip">Can wait</div>
+      </div>
+      <div class="label">Anything else?</div>
+      <textarea>Small kitten alone near the parking entrance, seems hungry but walking fine.</textarea>
+      <div class="label">Can you help further?</div>
+      <div class="chips" data-multi="help"><div class="chip sel">I can foster short-term</div><div class="chip">Interested in adopting</div><div class="chip">I can sponsor a vet check</div></div>
+    </div>
+    <div class="cta"><button class="btn" data-go="routing">Send to nearby help</button></div>
+  </section>
+
+  <!-- ROUTING -->
+  <section class="screen" id="routing">
+    <div class="top"><div class="back" data-go="report">‹</div><h2>Report #SHJ-2047</h2></div>
+    <div class="body">
+      <div id="matching" class="center">
+        <div class="pulse"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5A0A12" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+        <b>Finding the nearest help…</b><div class="muted" style="margin-top:6px">Checking partner vets, verified rescuers and shelters</div>
+      </div>
+      <div id="matched" style="display:none">
+        <div class="label" style="margin-top:4px">Notified in 4 seconds</div>
+        <div class="card"><div class="row"><div class="avatar">HV</div><div style="flex:1"><b>Harbour Vet Clinic</b><div class="muted">Partner vet · 1.8 km · open until 10 pm</div><span class="pill ok">Free first check for reported strays</span></div></div></div>
+        <div class="card"><div class="row"><div class="avatar">LM</div><div style="flex:1"><b>Linda M.</b><div class="muted">Verified rescuer · 2.4 km · 200+ cats placed</div><span class="pill">Accepted · on her way</span></div></div></div>
+        <div class="card"><div class="row"><div class="avatar">RS</div><div style="flex:1"><b>Registered partner shelter</b><div class="muted">Capacity: 4 places · backup if no foster</div></div></div></div>
+        <div class="label">Status</div>
+        <div class="timeline">
+          <div class="tl done"><b>Reported</b><div class="muted">7:42 pm · photo + location shared</div></div>
+          <div class="tl done"><b>Rescuer accepted</b><div class="muted">7:43 pm · Linda M.</div></div>
+          <div class="tl now"><b>Vet check booked</b><div class="muted">Tomorrow 10:00 · Harbour Vet Clinic</div></div>
+          <div class="tl"><b>Foster or adopt</b><div class="muted">You marked: can foster short-term</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cta"><button class="btn" data-go="journey">Start adoption journey</button></div>
+  </section>
+
+  <!-- JOURNEY -->
+  <section class="screen" id="journey">
+    <div class="top"><div class="back" data-go="routing">‹</div><h2>Adopting Mishmish</h2></div>
+    <div class="body">
+      <div class="card" style="background:var(--blush);border-color:var(--blush)"><div class="row"><div class="avatar" style="background:#fff">MM</div><div><b>Mishmish · ~10 weeks</b><div class="muted">Vet-checked · healthy · found 12 Nov</div></div></div></div>
+      <div class="row" style="justify-content:space-between;margin-top:8px"><b style="font-size:14px">Your progress</b><span class="muted" id="progTxt">1 of 4 done</span></div>
+      <div class="prog"><i id="progBar"></i></div>
+      <div class="label">Step by step</div>
+      <div class="step done"><div class="h"><div class="n">✓</div><div><b>Vet health check</b><div class="muted">Done · Harbour Vet Clinic</div></div></div></div>
+      <div class="step open" data-step><div class="h"><div class="n">2</div><div><b>First vaccinations</b><div class="muted">Due within 2 weeks</div></div></div>
+        <div class="x">Kittens need a core vaccine course from about 8 weeks. Book with a verified partner vet; the reminder for the booster is set automatically.<br><button data-done>Book · Thu 10:30 ›</button></div></div>
+      <div class="step" data-step><div class="h"><div class="n">3</div><div><b>Microchip & registration</b><div class="muted">Paperwork made simple</div></div></div>
+        <div class="x">We list the documents you need, pre-fill the forms from your profile and show where to submit them in your emirate.<br><button data-done>Mark as done</button></div></div>
+      <div class="step" data-step><div class="h"><div class="n">4</div><div><b>Prepare your home</b><div class="muted">Food, litter, carrier</div></div></div>
+        <div class="x">Everything a first-time owner needs in week one. A partner store kit covers it in one order.<br><button data-go="bundle">See starter bundle ›</button></div></div>
+    </div>
+    <div class="cta"><button class="btn" data-go="bundle">Get the kitten starter bundle</button></div>
+  </section>
+
+  <!-- BUNDLE -->
+  <section class="screen" id="bundle">
+    <div class="top"><div class="back" data-go="journey">‹</div><h2>Kitten starter bundle</h2></div>
+    <div class="body">
+      <div class="muted">From partner store · TailBox Pets · delivered tomorrow</div>
+      <div style="margin:14px 0 6px"><span class="price">AED 449</span><span class="strike">AED 534</span></div>
+      <span class="pill ok">Save AED 85 vs buying separately</span>
+      <div class="label">Inside</div>
+      <div class="items">
+        <div><span>Kitten dry food · 2 kg</span><span class="muted">vet-recommended</span></div>
+        <div><span>Wet food · 12 pouches</span><span class="muted"></span></div>
+        <div><span>Litter tray + 10 L litter</span><span class="muted"></span></div>
+        <div><span>Travel carrier</span><span class="muted">needed for vet visits</span></div>
+        <div><span>Bowls, scratcher, 2 toys</span><span class="muted"></span></div>
+      </div>
+      <div class="card" style="margin-top:16px"><div class="row"><div><b>Monthly food top-up</b><div class="muted">Reorder in one tap · cancel anytime</div></div><div style="margin-left:auto" class="chip sel" id="sub">On</div></div></div>
+    </div>
+    <div class="cta"><button class="btn" id="buyBundle">Order bundle · AED 449</button></div>
+  </section>
+
+  <!-- CARE -->
+  <section class="screen" id="care">
+    <div class="top"><div class="back" data-go="home">‹</div><h2>Book verified care</h2></div>
+    <div class="body">
+      <div class="card" style="background:var(--blush);border-color:var(--blush)"><b>2 months later…</b><div class="muted" style="color:var(--ink)">Sara is flying home for the winter break. Who looks after Mishmish?</div></div>
+      <div class="dates"><div>Drop-off<b>Fri 18 Dec</b></div><div>Pick-up<b>Sat 26 Dec</b></div></div>
+      <div class="label">Type of care</div>
+      <div class="seg" id="careSeg"><div class="on">Home sitter</div><div>Cat hotel</div></div>
+      <div class="label">Verified near you · 8 nights</div>
+      <div id="sitters">
+        <div class="card prov" data-go="provider"><div class="row"><div class="avatar">NA</div><div style="flex:1"><b>Nour A.</b><div class="muted">2.1 km · 4.9 ★ (63) · 41 cats cared for</div><span class="pill ok">ID & home verified</span><span class="pill">Vet on call</span></div><div class="rt">AED 85<div class="muted">/ night</div></div></div></div>
+        <div class="card prov" data-go="provider"><div class="row"><div class="avatar">RK</div><div style="flex:1"><b>Rania K.</b><div class="muted">3.4 km · 4.8 ★ (38)</div><span class="pill ok">ID & home verified</span></div><div class="rt">AED 75<div class="muted">/ night</div></div></div></div>
+      </div>
+      <div id="hotels" style="display:none">
+        <div class="card prov" data-go="provider"><div class="row"><div class="avatar">DW</div><div style="flex:1"><b>Desert Whiskers Cat Hotel</b><div class="muted">6.0 km · 4.7 ★ (210) · CCTV · A/C condos</div><span class="pill ok">Licensed & inspected</span><span class="pill">Vet on site</span></div><div class="rt">AED 95<div class="muted">/ night</div></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROVIDER -->
+  <section class="screen" id="provider">
+    <div class="top"><div class="back" data-go="care">‹</div><h2>Confirm booking</h2></div>
+    <div class="body">
+      <div class="card"><div class="row"><div class="avatar">NA</div><div><b>Nour A. · home sitter</b><div class="muted">Visits twice daily · feeding, litter, play</div></div></div>
+        <div style="margin-top:8px"><span class="pill ok">Emirates ID verified</span><span class="pill ok">Home check passed</span><span class="pill">Partner vet on call</span><span class="pill">Daily photo updates</span></div></div>
+      <div class="label">Mishmish's care notes</div>
+      <div class="card muted" style="color:var(--ink)">Vaccinated (synced from adoption journey) · eats twice a day · shy with strangers for the first hour.</div>
+      <div class="label">Summary</div>
+      <div class="sum">
+        <div><span>8 nights × AED 85</span><span>AED 680</span></div>
+        <div><span>Booking fee</span><span style="color:var(--ok);font-weight:bold">AED 0</span></div>
+        <div><span>Care guarantee</span><span class="muted">included</span></div>
+        <div class="tot"><span>Total</span><span>AED 680</span></div>
+      </div>
+      <div class="muted" style="margin-top:10px;line-height:1.45">Paid securely in-app. Nour receives payment after the stay ends.</div>
+    </div>
+    <div class="cta"><button class="btn" id="payBtn">Pay AED 680 · Apple Pay</button></div>
+  </section>
+
+  <!-- UPDATES -->
+  <section class="screen" id="updates">
+    <div class="top"><div class="back" data-go="home">‹</div><h2>Mishmish's stay</h2></div>
+    <div class="body feed">
+      <div class="center"><div class="check"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></div><b>Booked. Have a good trip, Sara.</b><div class="muted" style="margin:6px 0 18px">Nour · 18–26 Dec · AED 680</div></div>
+      <div class="label">Live updates</div>
+      <div class="card"><div class="pic"><svg width="110" height="80" viewBox="0 0 150 110"><g fill="none" stroke="#5A0A12" stroke-width="3" stroke-linecap="round"><path d="M30 90c0-20 20-34 45-34s45 14 45 34"/><path d="M52 60l-4-20 14 10M98 60l4-20-14 10"/><path d="M62 72q4 3 8 0M80 72q4 3 8 0"/></g></svg></div><div class="meta"><b>Day 2 · 9:15 am</b> · Breakfast done, napping on the sofa. Litter cleaned. <span class="muted">— Nour</span></div></div>
+      <div class="card"><div class="meta"><b>Day 1 · 7:40 pm</b> · Settled in after an hour, played with the feather toy. <span class="muted">— Nour</span></div></div>
+      <div class="card"><div class="row" style="padding:12px 14px"><div class="avatar">HV</div><div><b>Vet on call</b><div class="muted">Harbour Vet Clinic · 24/7 line shared with Nour</div></div></div></div>
+    </div>
+    <div class="cta"><button class="btn ghost" data-go="home">Back to home</button></div>
+  </section>
+
+  <!-- REHOME -->
+  <section class="screen" id="rehome">
+    <div class="top"><div class="back" data-go="home">‹</div><h2>Rehome a pet</h2></div>
+    <div class="body">
+      <div class="muted" style="line-height:1.5">Moving away or can't keep your pet? We match you only with screened adopters: ID-verified, interviewed and reference-checked by partner rescuers.</div>
+      <div class="label">Why are you rehoming?</div>
+      <div class="chips" data-single="why"><div class="chip">Relocating</div><div class="chip sel">Allergies</div><div class="chip">Cost</div><div class="chip">Other</div></div>
+      <div class="label">Matched adopters</div>
+      <div class="card"><div class="row"><div class="avatar">FH</div><div style="flex:1"><b>Farah H.</b><div class="muted">Indoor home · no other pets · Dubai</div><span class="pill ok">Screened by partner rescuer</span></div></div></div>
+      <div class="card"><div class="row"><div class="avatar">JT</div><div style="flex:1"><b>James T.</b><div class="muted">Villa · one older cat · Sharjah</div><span class="pill ok">Screened by partner rescuer</span></div></div></div>
+    </div>
+    <div class="cta"><button class="btn" data-go="home">Request a meet-and-greet</button></div>
+  </section>
+
+  <!-- SPONSOR -->
+  <section class="screen" id="sponsor">
+    <div class="top"><div class="back" data-go="home">‹</div><h2>Sponsor or foster</h2></div>
+    <div class="body">
+      <div class="muted" style="line-height:1.5">Can't adopt? 9 in 11 people we interviewed still wanted to help. Pick a case near you.</div>
+      <div class="label">Open cases nearby</div>
+      <div class="card"><b>Mother & 3 kittens · Al Taawun</b><div class="muted">Needs: foster for 3 weeks</div><span class="pill">Foster</span></div>
+      <div class="card"><b>Injured adult cat · Muwaileh</b><div class="muted">Needs: vet treatment AED 350 · 60% funded</div><div class="prog"><i style="width:60%"></i></div><span class="pill">Sponsor</span></div>
+    </div>
+    <div class="cta"><button class="btn" data-go="routing">Help with a case</button></div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  const order=['home','report','routing','journey','bundle','care','provider','updates'];
+  let cur='home', timer=null;
+  function go(id){
+    if(!document.getElementById(id))return;
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    document.getElementById(id).classList.add('on');cur=id;
+    document.querySelectorAll('#guide li').forEach(li=>li.classList.toggle('on',li.dataset.go===id));
+    if(id==='routing'){
+      const m=document.getElementById('matching'),d=document.getElementById('matched');
+      m.style.display='block';d.style.display='none';clearTimeout(timer);
+      timer=setTimeout(()=>{m.style.display='none';d.style.display='block'},1400);
+    }
+    try{history.replaceState(null,'','#'+id)}catch(e){}
+  }
+  document.addEventListener('click',e=>{
+    const t=e.target.closest('[data-go]');
+    if(t){go(t.dataset.go);return}
+    const chip=e.target.closest('.chip');
+    if(chip&&chip.parentElement.dataset.single){chip.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));chip.classList.add('sel')}
+    else if(chip&&chip.parentElement.dataset.multi){chip.classList.toggle('sel')}
+    else if(chip&&chip.id==='sub'){chip.classList.toggle('sel');chip.textContent=chip.classList.contains('sel')?'On':'Off'}
+    const h=e.target.closest('.step .h');
+    if(h){const s=h.parentElement;if(!s.classList.contains('done'))s.classList.toggle('open')}
+    const dn=e.target.closest('[data-done]');
+    if(dn){const s=dn.closest('.step');s.classList.add('done');s.classList.remove('open');s.querySelector('.n').textContent='✓';updateProg();toast('Step completed')}
+  });
+  function updateProg(){const n=document.querySelectorAll('#journey .step.done').length;document.getElementById('progBar').style.width=(n*25)+'%';document.getElementById('progTxt').textContent=n+' of 4 done'}
+  function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('on');setTimeout(()=>el.classList.remove('on'),1600)}
+  document.getElementById('buyBundle').onclick=()=>{toast('Order placed with TailBox Pets · arriving tomorrow');setTimeout(()=>go('care'),1300)};
+  document.getElementById('payBtn').onclick=()=>{toast('Payment confirmed');setTimeout(()=>go('updates'),700)};
+  document.querySelectorAll('#careSeg div').forEach((d,i)=>d.onclick=()=>{document.querySelectorAll('#careSeg div').forEach(x=>x.classList.remove('on'));d.classList.add('on');document.getElementById('sitters').style.display=i?'none':'block';document.getElementById('hotels').style.display=i?'block':'none'});
+  document.getElementById('photoIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=document.getElementById('photoImg');im.src=r.result;im.style.display='block';document.getElementById('catArt').style.display='none'};r.readAsDataURL(f)};
+  document.querySelectorAll('#guide li').forEach(li=>li.onclick=()=>go(li.dataset.go));
+  document.addEventListener('keydown',e=>{const i=order.indexOf(cur);if(e.key==='ArrowRight')go(order[Math.min(order.length-1,(i<0?0:i+1))]);if(e.key==='ArrowLeft')go(order[Math.max(0,(i<0?0:i-1))])});
+  updateProg();
+  const h=(location.hash||'').slice(1);go(order.includes(h)||document.getElementById(h)?h:'home');
+</script>
+</body>
+</html>
